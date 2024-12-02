@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace RefinementTypes2.Expressions
 {
-    internal class Predicate
+    internal class Predicate(string name)
     {
+        public string Name = name;
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

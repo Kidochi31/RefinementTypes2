@@ -8,5 +8,10 @@ namespace RefinementTypes2.Expressions
 {
     internal class RelativeExpression
     {
+
+        public override string ToString()
+        {
+            return "value";
+        }
     }
 }

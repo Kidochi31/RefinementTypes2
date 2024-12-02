@@ -8,5 +8,9 @@ namespace RefinementTypes2.Expressions
 {
     internal class Expression
     {
+        public override string ToString()
+        {
+            return "Expression";
+        }
     }
 }

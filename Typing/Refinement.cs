@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RefinementTypes2.Expressions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,11 +16,6 @@ namespace RefinementTypes2.Typing
             XOR
         }
 
-        internal class Expression() : Refinement
-        {
-
-        }
-
         internal class LogicalNot(Refinement refinement) : Refinement
         {
             public Refinement Refinement = refinement;
@@ -30,6 +26,24 @@ namespace RefinementTypes2.Typing
             public Refinement Left = left;
             public LogicalBinaryOperator Operator = op;
             public Refinement Right = right;
+        }
+
+        internal class Standard(RelativeExpression left, Predicate predicate, Expression right, bool inverted = false) : Refinement
+        {
+            public bool Inverted = inverted;
+            public RelativeExpression Left = left;
+            public Predicate Predicate = predicate;
+            public Expression Right = right;
+
+            public Standard Invert()
+            {
+                return new(Left, Predicate, Right, !Inverted);
+            }
+
+            public override string ToString()
+            {
+                return $"{(Inverted ? "not " : "")}{Predicate} ({Left}, {Right})";
+            }
         }
     }
 }
