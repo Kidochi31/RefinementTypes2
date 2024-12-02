@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RefinementTypes2
+namespace RefinementTypes2.Expressions
 {
-    internal abstract class Refinement
+    internal class Expression
     {
     }
 }

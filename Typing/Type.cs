@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RefinementTypes2
+namespace RefinementTypes2.Typing
 {
     internal abstract class Type
     {
@@ -44,12 +44,12 @@ namespace RefinementTypes2
 
         public override bool WillBeSubtypeOf(NamedType type)
         {
-            if (this.Equals(type))
+            if (Equals(type))
                 return true;
-            if (this.Equals(Any))
+            if (Equals(Any))
                 return false;
             return BaseType.WillBeSubtypeOf(type);
-            
+
         }
 
         public override bool WontBeSubtypeOf(NamedType type)
