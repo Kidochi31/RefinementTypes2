@@ -42,7 +42,9 @@ namespace RefinementTypes2.Typing
 
             public override string ToString()
             {
-                return $"{(Inverted ? "not " : "")}{Predicate} ({Left}, {Right})";
+                //return $"{(Inverted ? "not " : "")}{Predicate} ({Left}, {Right})";
+                return $"{(Inverted ? "not " : "")}{Predicate} {Right}";
+                //return $"{(Inverted ? "not " : "")}{Predicate}";
             }
         }
     }

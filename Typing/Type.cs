@@ -60,6 +60,8 @@ namespace RefinementTypes2.Typing
                 return true;
             return BaseType.WontBeSubtypeOf(type);
         }
+
+        public override string ToString() => Name;
     }
 
     internal class RefinedType : Type
@@ -76,6 +78,8 @@ namespace RefinementTypes2.Typing
         public override bool WillBeSubtypeOf(NamedType type) => BaseType.WillBeSubtypeOf(type);
 
         public override bool WontBeSubtypeOf(NamedType type) => BaseType.WontBeSubtypeOf(type);
+
+        public override string ToString() => $"{BaseType}[{Refinement}]";
     }
 
     internal class OrType : Type
@@ -90,6 +94,8 @@ namespace RefinementTypes2.Typing
         public override bool WillBeSubtypeOf(NamedType type) => BaseTypes.All(baseType => baseType.WillBeSubtypeOf(type));
 
         public override bool WontBeSubtypeOf(NamedType type) => BaseTypes.All(baseType => baseType.WontBeSubtypeOf(type));
+
+        public override string ToString() => "(" + string.Join(" | ", BaseTypes) + ")";
     }
 
     internal class AndType : Type
@@ -104,5 +110,7 @@ namespace RefinementTypes2.Typing
         public override bool WillBeSubtypeOf(NamedType type) => BaseTypes.Any(baseType => baseType.WillBeSubtypeOf(type));
 
         public override bool WontBeSubtypeOf(NamedType type) => BaseTypes.Any(baseType => baseType.WontBeSubtypeOf(type));
+
+        public override string ToString() => "(" + string.Join(" & ", BaseTypes) + ")";
     }
 }
