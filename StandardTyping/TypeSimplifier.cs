@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
+using static RefinementTypes2.Typing.Refinement;
 
 namespace RefinementTypes2.StandardTyping
 {
@@ -15,7 +16,11 @@ namespace RefinementTypes2.StandardTyping
             switch (type)
             {
                 case NamedType namedType:
-                    return new StandardType([[new Refinement.Standard(new RelativeExpression(), Predicate.Base, new Expression.TypeExpr(namedType))]]);
+                    if (namedType.Equals(NamedType.Any))
+                        return StandardType.GetDefaultAndType();
+
+                    StandardRefinement typeRefinement = new StandardRefinement(new Expression.This(), Predicate.Base, new Expression.TypeExpr(namedType));
+                    return StandardType.And(SimplifyType(namedType.BaseType), [typeRefinement]);
 
                 case RefinedType refinedType:
                     return StandardType.And(SimplifyType(refinedType.BaseType), SimplifyRefinement(refinedType.Refinement));
@@ -34,8 +39,10 @@ namespace RefinementTypes2.StandardTyping
         {
             switch (refinement)
             {
-                case Refinement.Standard standard:
-                    return new StandardType([[standard]]);
+                case Refinement.Relative relative:
+                    return new StandardType([[new StandardRefinement(relative.Left.Substitute(new Expression.This()), relative.Predicate, relative.Right, relative.Inverted)]]);
+                case Refinement.Absolute absolute:
+                    return new StandardType([[new StandardRefinement(absolute.Left, absolute.Predicate, absolute.Right, absolute.Inverted)]]);
                 case Refinement.LogicalBinary lbinary:
                     switch (lbinary.Operator)
                     {

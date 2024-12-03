@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RefinementTypes2.Typing
+namespace RefinementTypes2.Resolution
 {
-    internal class Context
+    internal class Variable
     {
     }
 }

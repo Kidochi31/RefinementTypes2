@@ -1,5 +1,5 @@
-﻿using RefinementTypes2.StandardTyping;
-using RefinementTypes2.Typing;
+﻿using RefinementTypes2.Resolution;
+using RefinementTypes2.StandardTyping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,11 +15,15 @@ namespace RefinementTypes2.Proof
 
 
         public static bool RefinementProductAContradictsB(RefinementProduct a, RefinementProduct b, Context context)
-            => a.Any(refinementA => b.Any(refinementB => RefinementAContradictsB(refinementA, refinementB, context)));
-
-        public static bool RefinementAContradictsB(Refinement.Standard a, Refinement.Standard b, Context context)
         {
-            return false;
+            context = context.AddThisProduct(a.And(b));
+            return a.Any(refinementA => b.Any(refinementB => RefinementAContradictsB(refinementA, refinementB, context)));
+        }
+
+        public static bool RefinementAContradictsB(StandardRefinement a, StandardRefinement b, Context context)
+        {
+            //Console.WriteLine($"Testing {a} and {b}");
+            return a.Contradicts(b, context);
         }
     }
 }

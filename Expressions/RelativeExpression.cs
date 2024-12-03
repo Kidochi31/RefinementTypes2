@@ -9,6 +9,11 @@ namespace RefinementTypes2.Expressions
     internal class RelativeExpression
     {
 
+        public Expression Substitute(Expression relativeTo)
+        {
+            return relativeTo;
+        }
+
         public override string ToString()
         {
             return "value";

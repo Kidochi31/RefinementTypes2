@@ -28,14 +28,34 @@ namespace RefinementTypes2.Typing
             public Refinement Right = right;
         }
 
-        internal class Standard(RelativeExpression left, Predicate predicate, Expression right, bool inverted = false) : Refinement
+        internal class Absolute(Expression left, Predicate predicate, Expression right, bool inverted = false) : Refinement
+        {
+            public bool Inverted = inverted;
+            public Expression Left = left;
+            public Predicate Predicate = predicate;
+            public Expression Right = right;
+
+            public Absolute Invert()
+            {
+                return new(Left, Predicate, Right, !Inverted);
+            }
+
+            public override string ToString()
+            {
+                //return $"{(Inverted ? "not " : "")}{Predicate} ({Left}, {Right})";
+                return $"{(Inverted ? "not " : "")}{Predicate} {Right}";
+                //return $"{(Inverted ? "not " : "")}{Predicate}";
+            }
+        }
+
+        internal class Relative(RelativeExpression left, Predicate predicate, Expression right, bool inverted = false) : Refinement
         {
             public bool Inverted = inverted;
             public RelativeExpression Left = left;
             public Predicate Predicate = predicate;
             public Expression Right = right;
 
-            public Standard Invert()
+            public Relative Invert()
             {
                 return new(Left, Predicate, Right, !Inverted);
             }

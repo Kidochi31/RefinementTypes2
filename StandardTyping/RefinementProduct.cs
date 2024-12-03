@@ -8,16 +8,21 @@ using System.Threading.Tasks;
 
 namespace RefinementTypes2.StandardTyping
 {
-    internal class RefinementProduct (IEnumerable<Refinement.Standard> refinements) : IEnumerable<Refinement.Standard>
+    internal class RefinementProduct (IEnumerable<StandardRefinement> refinements) : IEnumerable<StandardRefinement>
     {
-        public List<Refinement.Standard> Refinements = refinements.ToList();
+        public List<StandardRefinement> Refinements = refinements.ToList();
 
         public StandardType Invert()
         {
-            return new StandardType(from refinement in Refinements select new List<Refinement.Standard>() { refinement.Invert() });
+            return new StandardType(from refinement in Refinements select new List<StandardRefinement>() { refinement.Invert() });
         }
 
-        public IEnumerator<Refinement.Standard> GetEnumerator() => Refinements.GetEnumerator();
+        public RefinementProduct And(RefinementProduct other)
+        {
+            return new([.. Refinements, .. other]);
+        }
+
+        public IEnumerator<StandardRefinement> GetEnumerator() => Refinements.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => Refinements.GetEnumerator();
 
