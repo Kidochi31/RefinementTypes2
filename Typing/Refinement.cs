@@ -40,9 +40,11 @@ namespace RefinementTypes2.Typing
                 return new(Left, Predicate, Right, !Inverted);
             }
 
+            
+
             public override string ToString()
             {
-                //return $"{(Inverted ? "not " : "")}{Predicate} ({Left}, {Right})";
+                //
                 return $"{(Inverted ? "not " : "")}{Predicate} {Right}";
                 //return $"{(Inverted ? "not " : "")}{Predicate}";
             }

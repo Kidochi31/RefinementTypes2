@@ -17,13 +17,12 @@ namespace RefinementTypes2.Proof
             Expression left = refinement.Left.Simplify(context);
             Expression right = refinement.Right.Simplify(context);
             if (left is Expression.ValueExpr leftV && right is Expression.ValueExpr rightV)
-                return refinement.Inverted ? refinement.Predicate.ApplyInversePredicate(leftV, rightV, context)
-                                           : refinement.Predicate.ApplyPredicate(leftV, rightV, context);
+                return Predicate.Apply(refinement.Predicate, leftV, rightV, context, refinement.Inverted);
 
             // if the refinement to infer is relative
-            return false;
-            if(refinement.Left.IsRelative())
+            if (refinement.Left.IsRelative())
                 return context.ThisProduct.Any(from => Predicate.CanInfer(refinement, from, context));
+            return false;
         }
     }
 }

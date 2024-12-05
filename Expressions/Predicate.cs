@@ -54,6 +54,14 @@ namespace RefinementTypes2.Expressions
             return Name;
         }
 
+        public static bool Apply(Predicate predicate, Expression.ValueExpr left, Expression.ValueExpr right, Context context, bool inverted)
+        {
+            if (inverted)
+                return predicate.ApplyInversePredicate(left, right, context);
+            else
+                return predicate.ApplyPredicate(left, right, context);
+        }
+
         public static bool ContradictionBetween(StandardRefinement thisRefinement, StandardRefinement other, Context context)
         {
             // check that left hand side of both are the same
@@ -142,23 +150,36 @@ namespace RefinementTypes2.Expressions
 
         public static Predicate Equal = new Predicate("=", null,
             // Contradictions
-            [(PredicateMatch.Self, (StandardRefinement r1, StandardRefinement r2, Context context) =>
+            [(PredicateMatch.Any, (StandardRefinement r1, StandardRefinement r2, Context context) =>
             {
-                if(r1.Left.IsRelative()){
-                    var A = r1.Right;
-                    var predicate = r2.Predicate;
-                    var B = r2.Right;
-                    // x = A contradicts x.predicate(B) if A.predicate(B) is false
-                    if(!r1.Inverted){
-                        var inverted = !r2.Inverted;
-                        var refinementToProve = new StandardRefinement(A, predicate, B, inverted);
-                        return Inference.CanInfer(refinementToProve, context);
-                    }
+                var A = r1.Right;
+                var predicate = r2.Predicate;
+                var B = r2.Right;
+                // x = A contradicts x.predicate(B) if A.predicate(B) is false
+                if(!r1.Inverted){
+                    var inverted = !r2.Inverted;
+                    var refinementToProve = new StandardRefinement(A, predicate, B, inverted);
+                    return Inference.CanInfer(refinementToProve, context);
                 }
                 return false;
             })]
         , // Inferences
-        []
+        [
+            //(PredicateMatch.Any, (StandardRefinement r1, StandardRefinement r2, Context context) =>
+            //{ 
+            //    var A = r1.Right;
+            //    var predicate = r2.Predicate;
+            //    var B = r2.Right;
+            //    // x = A implies x.predicate(B) if A.predicate(B)
+            //    if(!r1.Inverted){
+                    
+            //        var inverted = r2.Inverted;
+            //        var refinementToProve = new StandardRefinement(A, predicate, B, inverted);
+            //        return Inference.CanInfer(refinementToProve, context);
+            //    }
+            //    return false;
+            //})
+            ]
         , // Predicate
         (v1, v2, context) => v1.Value.Equals(v2.Value)
         , // Inverse Predicate

@@ -133,31 +133,40 @@ namespace RefinementTypes2
             Typing.Type LTFive = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.LessThan, five));
             Typing.Type LTTen = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.LessThan, ten));
 
-            WriteImposition("GTZero", "GTZero", GTZero, GTZero);
-            WriteImposition("LTZero", "LTZero", LTZero, LTZero);
-            WriteImposition("GTFive", "GTZero", GTFive, GTZero);
-            WriteImposition("GTZero", "GTFive", GTZero, GTFive);
-            WriteImposition("GTZero", "LTZero", GTZero, LTZero);
-            WriteImposition("GTZero", "GTTen", GTZero, GTTen);
-            WriteImposition("GTTen", "GTZero", GTTen, GTZero);
+            //WriteImposition("GTZero", "GTZero", GTZero, GTZero);
+            //WriteImposition("LTZero", "LTZero", LTZero, LTZero);
+            //WriteImposition("GTFive", "GTZero", GTFive, GTZero);
+            //WriteImposition("GTZero", "GTFive", GTZero, GTFive);
+            //WriteImposition("GTZero", "LTZero", GTZero, LTZero);
+            //WriteImposition("GTZero", "GTTen", GTZero, GTTen);
+            //WriteImposition("GTTen", "GTZero", GTTen, GTZero);
 
             Typing.Type GTEZero = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.LessThan, zero, true));
             Typing.Type GTETen = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.LessThan, ten, true));
             Typing.Type LTEZero = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.GreaterThan, zero, true));
             Typing.Type LTETen = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.GreaterThan, ten, true));
 
-            WriteImposition("GTETen", "GTEZero", GTETen, GTEZero);
-            WriteImposition("GTETen", "GTZero", GTETen, GTZero);
-            WriteImposition("GTEZero", "GTEZero", GTEZero, GTEZero);
-            WriteImposition("GTEZero", "GTZero", GTEZero, GTZero);
-            WriteImposition("GTZero", "GTEZero", GTZero, GTEZero);
+            //WriteImposition("GTETen", "GTEZero", GTETen, GTEZero);
+            //WriteImposition("GTETen", "GTZero", GTETen, GTZero);
+            //WriteImposition("GTEZero", "GTEZero", GTEZero, GTEZero);
+            //WriteImposition("GTEZero", "GTZero", GTEZero, GTZero);
+            //WriteImposition("GTZero", "GTEZero", GTZero, GTEZero);
 
 
-            WriteImposition("LTETen", "LTEZero", LTETen, LTEZero);
-            WriteImposition("LTETen", "LTZero", LTETen, LTZero);
-            WriteImposition("LTEZero", "LTEZero", LTEZero, LTEZero);
-            WriteImposition("LTEZero", "LTZero", LTEZero, LTZero);
-            WriteImposition("LTZero", "LTEZero", LTZero, LTEZero);
+            //WriteImposition("LTETen", "LTEZero", LTETen, LTEZero);
+            //WriteImposition("LTETen", "LTZero", LTETen, LTZero);
+            //WriteImposition("LTEZero", "LTEZero", LTEZero, LTEZero);
+            //WriteImposition("LTEZero", "LTZero", LTEZero, LTZero);
+            //WriteImposition("LTZero", "LTEZero", LTZero, LTEZero);
+
+            Expression.ValueExpr nine = new Expression.ValueExpr(9, NamedType.Number);
+            Typing.Type Nine = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.Equal, nine));
+            Typing.Type Zero = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.Equal, zero));
+
+            WriteImposition("Nine", "GTZero", Nine, GTZero);
+            WriteImposition("Zero", "GTEZero", Zero, GTEZero);
+            WriteImposition("Zero", "GTZero", Zero, GTZero);
+            WriteImposition("Zero", "GTFive", Zero, GTFive);
         }
 
         static void WriteImposition(string aName, string bName, Typing.Type a, Typing.Type b, bool writeNames = false)

@@ -26,6 +26,8 @@ namespace RefinementTypes2.StandardTyping
             return Predicate.ContradictionBetween(this, other, context);
         }
 
+        public string ToFullString() => $"{(Inverted ? "not " : "")}{Predicate} ({Left}, {Right})";
+
         public override string ToString()
         {
             //return $"{(Inverted ? "not " : "")}{Predicate} ({Left}, {Right})";
