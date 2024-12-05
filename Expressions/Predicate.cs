@@ -8,6 +8,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace RefinementTypes2.Expressions
@@ -16,23 +17,31 @@ namespace RefinementTypes2.Expressions
     {
         public enum PredicateMatch
         {
+            Group,
             Self,
             Any
         }
 
+        public class PredicateGroup { }
+        public static PredicateGroup TotalOrder = new();
+
+
         public readonly string Name;
+        public PredicateGroup? Group;
         public List<(PredicateMatch MatchType, Func<StandardRefinement, StandardRefinement, Context, bool> Contradiction)> Contradictions;
         public List<(PredicateMatch MatchType, Func<StandardRefinement, StandardRefinement, Context, bool> Inference)> Inferences;
         public Func<Expression.ValueExpr, Expression.ValueExpr, Context, bool> ApplyPredicate;
         public Func<Expression.ValueExpr, Expression.ValueExpr, Context, bool> ApplyInversePredicate;
 
         public Predicate(string name
+            , PredicateGroup? group
             , List<(PredicateMatch MatchType, Func<StandardRefinement, StandardRefinement, Context, bool> Contradiction)> contradictions
             , List<(PredicateMatch MatchType, Func<StandardRefinement, StandardRefinement, Context, bool> Contradiction)> inferences
             , Func<Expression.ValueExpr, Expression.ValueExpr, Context, bool> applyPredicate
             , Func<Expression.ValueExpr, Expression.ValueExpr, Context, bool> applyInversePredicate)
         {
             Name = name;
+            Group = group;
             Contradictions = contradictions;
             Inferences = inferences;
             ApplyPredicate = applyPredicate;
@@ -73,10 +82,13 @@ namespace RefinementTypes2.Expressions
             var contradictions = thisPredicate.Contradictions;
             // Self first
             bool self = thisPredicate.Equals(other);
+            bool group = thisPredicate.Group?.Equals(other.Group) ?? false;
             if(self && contradictions.Any(contradiction => contradiction.MatchType == PredicateMatch.Self))
                 return contradictions.First(contradiction => contradiction.MatchType == PredicateMatch.Self).Contradiction;
+            if (group && contradictions.Any(contradiction => contradiction.MatchType == PredicateMatch.Group))
+                return contradictions.First(contradiction => contradiction.MatchType == PredicateMatch.Group).Contradiction;
             // Any last
-            if(contradictions.Any(contradiction => contradiction.MatchType == PredicateMatch.Any))
+            if (contradictions.Any(contradiction => contradiction.MatchType == PredicateMatch.Any))
                 return contradictions.First(contradiction => contradiction.MatchType == PredicateMatch.Any).Contradiction;
             return null;
         }
@@ -86,15 +98,18 @@ namespace RefinementTypes2.Expressions
             var inferences = thisPredicate.Inferences;
             // Self first
             bool self = thisPredicate.Equals(other);
+            bool group = thisPredicate.Group?.Equals(other.Group) ?? false;
             if (self && inferences.Any(inference => inference.MatchType == PredicateMatch.Self))
                 return inferences.First(inference => inference.MatchType == PredicateMatch.Self).Inference;
+            if (group && inferences.Any(inference => inference.MatchType == PredicateMatch.Group))
+                return inferences.First(inference => inference.MatchType == PredicateMatch.Group).Inference;
             // Any last
             if (inferences.Any(inference => inference.MatchType == PredicateMatch.Any))
                 return inferences.First(inference => inference.MatchType == PredicateMatch.Any).Inference;
             return null;
         }
 
-        public static Predicate Base = new Predicate("Base",
+        public static Predicate Base = new Predicate("Base", null,
             // Contradictions
             [(PredicateMatch.Self, (StandardRefinement r1, StandardRefinement r2, Context context) => 
             // Base =><= Base
@@ -125,7 +140,7 @@ namespace RefinementTypes2.Expressions
         , // Inverse Predicate
         (v1, v2, context) => false);
 
-        public static Predicate Equal = new Predicate("Equal",
+        public static Predicate Equal = new Predicate("=", null,
             // Contradictions
             [(PredicateMatch.Self, (StandardRefinement r1, StandardRefinement r2, Context context) =>
             {
@@ -148,5 +163,109 @@ namespace RefinementTypes2.Expressions
         (v1, v2, context) => v1.Value.Equals(v2.Value)
         , // Inverse Predicate
         (v1, v2, context) => !v1.Value.Equals(v2.Value));
+
+        public static Predicate LessThan = new Predicate("<", TotalOrder,
+            // Contradictions
+            [(PredicateMatch.Group, (StandardRefinement r1, StandardRefinement r2, Context context) =>
+            {
+                var A = r1.Right;
+                var B = r2.Right;
+                if(r1.Inverted)
+                {
+                    // x >= A
+                    // Can contradict with x < B or x <= B
+                    if (r2.Predicate.Equals(GreaterThan) && r2.Inverted){
+                        // x <= B
+                        // contradicts if A > B
+                        var refinementToProve = new StandardRefinement(A, GreaterThan, B, false);
+                        return Inference.CanInfer(refinementToProve, context);
+                    }
+                    else if (r2.Predicate.Equals(LessThan) && !r2.Inverted)
+                    {
+                        // x < B
+                        // contradicts if A >= B (which is !(A < B))
+                        var refinementToProve = new StandardRefinement(A, LessThan, B, true);
+                        return Inference.CanInfer(refinementToProve, context);
+                    }
+                }
+                else
+                {
+                    // x < A
+                    // Can contradict with x > B or x >= B
+                    if (r2.Predicate.Equals(LessThan) && r2.Inverted){
+                        // x >= B
+                        // contradicts if A <= B (which is !(A > B))
+                        var refinementToProve = new StandardRefinement(A, GreaterThan, B, true);
+                        return Inference.CanInfer(refinementToProve, context);
+                    }
+                    else if (r2.Predicate.Equals(GreaterThan) && !r2.Inverted)
+                    {
+                        // x > B
+                        // contradicts if A <= B (which is !(A > B))
+                        var refinementToProve = new StandardRefinement(A, GreaterThan, B, true);
+                        return Inference.CanInfer(refinementToProve, context);
+                    }
+                }
+                return false;
+            })]
+        , // Inferences
+        []
+        , // Predicate
+        (v1, v2, context) => Convert.ToDouble(v1.Value) < Convert.ToDouble(v2.Value)
+        , // Inverse Predicate
+        (v1, v2, context) => !(Convert.ToDouble(v1.Value) < Convert.ToDouble(v2.Value)));
+
+        public static Predicate GreaterThan = new Predicate(">", TotalOrder,
+            // Contradictions
+            [(PredicateMatch.Group, (StandardRefinement r1, StandardRefinement r2, Context context) =>
+            {
+                var A = r1.Right;
+                var B = r2.Right;
+                if(r1.Inverted)
+                {
+                    
+                    // x <= A
+                    // Can contradict with x > B or x >= B
+                    if (r2.Predicate.Equals(LessThan) && r2.Inverted){
+                        // x >= B
+                        // contradicts if A < B
+                        var refinementToProve = new StandardRefinement(A, LessThan, B, false);
+                        return Inference.CanInfer(refinementToProve, context);
+                    }
+                    else if (r2.Predicate.Equals(GreaterThan) && !r2.Inverted)
+                    {
+                        // x > B
+                        // contradicts if A <= B (which is !(A > B))
+                        var refinementToProve = new StandardRefinement(A, GreaterThan, B, true);
+                        return Inference.CanInfer(refinementToProve, context);
+                    }
+                }
+                else
+                {
+                    // x > A
+                    // Can contradict with x < B or x <= B
+                    if (r2.Predicate.Equals(GreaterThan) && r2.Inverted){
+                        // x <= B
+                        // contradicts if A >= B (which is !(A < B))
+                        var refinementToProve = new StandardRefinement(A, LessThan, B, true);
+                        
+                        return Inference.CanInfer(refinementToProve, context);
+                    }
+                    else if (r2.Predicate.Equals(LessThan) && !r2.Inverted)
+                    {
+                        // x < B
+                        // contradicts if A >= B (which is !(A < B))
+                        var refinementToProve = new StandardRefinement(A, LessThan, B, true);
+                        return Inference.CanInfer(refinementToProve, context);
+                    }
+                }
+                return false;
+            })]
+        , // Inferences
+        []
+        , // Predicate
+        (v1, v2, context) => Convert.ToDouble(v1.Value) > Convert.ToDouble(v2.Value)
+        , // Inverse Predicate
+        (v1, v2, context) => !(Convert.ToDouble(v1.Value) > Convert.ToDouble(v2.Value)));
     }
 }
