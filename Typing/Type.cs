@@ -41,6 +41,7 @@ namespace RefinementTypes2.Typing
 
         public static NamedType Any = CreateAnyType();
         public static NamedType Type = new NamedType("Type");
+        public static NamedType Number = new NamedType("Number");
 
         public override bool WillBeSubtypeOf(NamedType type)
         {

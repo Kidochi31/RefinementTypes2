@@ -14,12 +14,12 @@ namespace RefinementTypes2.Resolution
 
         public readonly Expression? ThisExpression = expression;
 
-        public Context AddThisProduct(RefinementProduct refinementProduct)
+        public Context AddThisProduct(RefinementProduct? refinementProduct)
         {
             return new Context(refinementProduct, ThisExpression);
         }
 
-        public Context AddThisExpression(Expression expression)
+        public Context AddThisExpression(Expression? expression)
         {
             return new Context(ThisProduct, expression);
         }
