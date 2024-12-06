@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RefinementTypes2.Proof;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using RefinementTypes2.Resolution;
 
 namespace RefinementTypes2
 {
@@ -121,7 +122,7 @@ namespace RefinementTypes2
             //Console.WriteLine($"Failure : {Imposition.FindImpositionFailureBOnA(Number, NotNineStd)}");
             //Console.WriteLine($"Nine -> Number : {Imposition.ImposeBOnA(NotNineStd, Number)}");
 
-            // Test for type simplification of Total order refinements
+            // Test for type imposition of Total order refinements
             Expression.ValueExpr ten = new Expression.ValueExpr(10, NamedType.Number);
             Expression.ValueExpr zero = new Expression.ValueExpr(0, NamedType.Number);
             Expression.ValueExpr five = new Expression.ValueExpr(5, NamedType.Number);
@@ -159,14 +160,41 @@ namespace RefinementTypes2
             //WriteImposition("LTEZero", "LTZero", LTEZero, LTZero);
             //WriteImposition("LTZero", "LTEZero", LTZero, LTEZero);
 
+            // Test for type imposition of Total order refinements, implied by =
             Expression.ValueExpr nine = new Expression.ValueExpr(9, NamedType.Number);
             Typing.Type Nine = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.Equal, nine));
             Typing.Type Zero = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.Equal, zero));
+            Typing.Type NotNine = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.Equal, nine, true));
 
-            WriteImposition("Nine", "GTZero", Nine, GTZero);
-            WriteImposition("Zero", "GTEZero", Zero, GTEZero);
-            WriteImposition("Zero", "GTZero", Zero, GTZero);
-            WriteImposition("Zero", "GTFive", Zero, GTFive);
+            //WriteImposition("Nine", "GTZero", Nine, GTZero);
+            //WriteImposition("Zero", "GTEZero", Zero, GTEZero);
+            //WriteImposition("Zero", "GTZero", Zero, GTZero);
+            //WriteImposition("Zero", "GTFive", Zero, GTFive);
+
+            //WriteImposition("LTFive", "NotNine", LTFive, NotNine);
+            //WriteImposition("NotNine", "LTFive", NotNine, LTFive);
+            //WriteImposition("LTTen", "NotNine", LTTen, NotNine);
+
+            // Test for type imposition of refinements relying on variables (bounded by constants)
+            // Age is greater than ten
+            Variable Age = new Variable("Age", new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.GreaterThan, five)));
+            // SameAsAge = Age
+            Typing.Type SameAsAge = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.Equal, new Expression.VariableRef(Age)));
+
+            //WriteImposition("SameAsAge", "GTZero", SameAsAge, GTZero);
+            //WriteImposition("SameAsAge", "GTFive", SameAsAge, GTFive);
+            //WriteImposition("SameAsAge", "GTTen", SameAsAge, GTTen);
+
+            // Test for type imposition of refinements relying on variables (bounded by variable)
+            // MinAge is an unbounded variable
+            Variable MinAge = new Variable("MinAge", NamedType.Number);
+            // Age2 is a variable which is greater than minAge
+            Variable ValidAge = new Variable("ValidAge", new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.GreaterThan, new Expression.VariableRef(MinAge))));
+            // SameAsValidAge = ValidAge
+            Typing.Type SameAsValidAge = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.Equal, new Expression.VariableRef(ValidAge)));
+            Typing.Type AboveMinimumAge = new RefinedType(NamedType.Number, new Refinement.Absolute(new Expression.This(), Predicate.GreaterThan, new Expression.VariableRef(MinAge)));
+
+            WriteImposition("SameAsValidAge", "AboveMinimumAge", SameAsValidAge, AboveMinimumAge);
         }
 
         static void WriteImposition(string aName, string bName, Typing.Type a, Typing.Type b, bool writeNames = false)

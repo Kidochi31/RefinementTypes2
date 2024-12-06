@@ -29,21 +29,24 @@ namespace RefinementTypes2.Expressions
         public readonly string Name;
         public PredicateGroup? Group;
         public List<(PredicateMatch MatchType, Func<StandardRefinement, StandardRefinement, Context, bool> Contradiction)> Contradictions;
-        public List<(PredicateMatch MatchType, Func<StandardRefinement, StandardRefinement, Context, bool> Inference)> Inferences;
+        public Func<Expression, Expression, Context, bool> CanInferPredicate;
+        public Func<Expression, Expression, Context, bool> CanInferInversePredicate;
         public Func<Expression.ValueExpr, Expression.ValueExpr, Context, bool> ApplyPredicate;
         public Func<Expression.ValueExpr, Expression.ValueExpr, Context, bool> ApplyInversePredicate;
 
         public Predicate(string name
             , PredicateGroup? group
             , List<(PredicateMatch MatchType, Func<StandardRefinement, StandardRefinement, Context, bool> Contradiction)> contradictions
-            , List<(PredicateMatch MatchType, Func<StandardRefinement, StandardRefinement, Context, bool> Contradiction)> inferences
+            , Func<Expression, Expression, Context, bool> canInferPredicate
+            , Func<Expression, Expression, Context, bool> canInferInversePredicate
             , Func<Expression.ValueExpr, Expression.ValueExpr, Context, bool> applyPredicate
             , Func<Expression.ValueExpr, Expression.ValueExpr, Context, bool> applyInversePredicate)
         {
             Name = name;
             Group = group;
             Contradictions = contradictions;
-            Inferences = inferences;
+            CanInferPredicate = canInferPredicate;
+            CanInferInversePredicate = canInferInversePredicate;
             ApplyPredicate = applyPredicate;
             ApplyInversePredicate = applyInversePredicate;
         }
@@ -62,27 +65,28 @@ namespace RefinementTypes2.Expressions
                 return predicate.ApplyPredicate(left, right, context);
         }
 
+        public static bool ApplyToExpression(Predicate predicate, Expression left, Expression right, Context context, bool inverted)
+        {
+            if (inverted)
+                return predicate.CanInferInversePredicate(left, right, context);
+            else
+                return predicate.CanInferPredicate(left, right, context);
+        }
+
         public static bool ContradictionBetween(StandardRefinement thisRefinement, StandardRefinement other, Context context)
         {
             // check that left hand side of both are the same
             if (!thisRefinement.Left.IsSameAs(other.Left, context))
                 return false;
             // find if thisRefinement supports contradiction with other refinement
-            var contradictionFunc = GetContradictionChecker(thisRefinement.Predicate, other.Predicate);
-            if(contradictionFunc == null)
-                return false;
+            var contradictionFunc1 = GetContradictionChecker(thisRefinement.Predicate, other.Predicate);
+            var contradictionFunc2 = GetContradictionChecker(other.Predicate, thisRefinement.Predicate);
             // run the relevant contradiction checker
-            return contradictionFunc(thisRefinement, other, context);
-        }
-
-        public static bool CanInfer(StandardRefinement target, StandardRefinement from, Context context)
-        {
-            // find if from supports inference with target
-            var inferenceFunc = GetInferenceChecker(from.Predicate, target.Predicate);
-            if (inferenceFunc == null)
-                return false;
-            // run the relevant inference checker
-            return inferenceFunc(from, target, context);
+            if (contradictionFunc1 != null && contradictionFunc1(thisRefinement, other, context))
+                return true;
+            if (contradictionFunc2 != null && contradictionFunc2(other, thisRefinement, context))
+                return true;
+            return false;
         }
 
         static Func<StandardRefinement, StandardRefinement, Context, bool>? GetContradictionChecker(Predicate thisPredicate, Predicate other)
@@ -98,22 +102,6 @@ namespace RefinementTypes2.Expressions
             // Any last
             if (contradictions.Any(contradiction => contradiction.MatchType == PredicateMatch.Any))
                 return contradictions.First(contradiction => contradiction.MatchType == PredicateMatch.Any).Contradiction;
-            return null;
-        }
-
-        static Func<StandardRefinement, StandardRefinement, Context, bool>? GetInferenceChecker(Predicate thisPredicate, Predicate other)
-        {
-            var inferences = thisPredicate.Inferences;
-            // Self first
-            bool self = thisPredicate.Equals(other);
-            bool group = thisPredicate.Group?.Equals(other.Group) ?? false;
-            if (self && inferences.Any(inference => inference.MatchType == PredicateMatch.Self))
-                return inferences.First(inference => inference.MatchType == PredicateMatch.Self).Inference;
-            if (group && inferences.Any(inference => inference.MatchType == PredicateMatch.Group))
-                return inferences.First(inference => inference.MatchType == PredicateMatch.Group).Inference;
-            // Any last
-            if (inferences.Any(inference => inference.MatchType == PredicateMatch.Any))
-                return inferences.First(inference => inference.MatchType == PredicateMatch.Any).Inference;
             return null;
         }
 
@@ -141,8 +129,10 @@ namespace RefinementTypes2.Expressions
                 else
                     return false;
             })]
-        , // Inferences
-        []
+        , // Can Infer
+        (v1, v2, context) => false
+        , // Can Infer Inverse
+        (v1, v2, context) => false
         , // Predicate
         (v1, v2, context) => false
         , // Inverse Predicate
@@ -163,23 +153,10 @@ namespace RefinementTypes2.Expressions
                 }
                 return false;
             })]
-        , // Inferences
-        [
-            //(PredicateMatch.Any, (StandardRefinement r1, StandardRefinement r2, Context context) =>
-            //{ 
-            //    var A = r1.Right;
-            //    var predicate = r2.Predicate;
-            //    var B = r2.Right;
-            //    // x = A implies x.predicate(B) if A.predicate(B)
-            //    if(!r1.Inverted){
-                    
-            //        var inverted = r2.Inverted;
-            //        var refinementToProve = new StandardRefinement(A, predicate, B, inverted);
-            //        return Inference.CanInfer(refinementToProve, context);
-            //    }
-            //    return false;
-            //})
-            ]
+        , // Can Infer
+        (v1, v2, context) => v1.IsSameAs(v2, context)
+        , // Can Infer Inverse
+        (v1, v2, context) => false
         , // Predicate
         (v1, v2, context) => v1.Value.Equals(v2.Value)
         , // Inverse Predicate
@@ -229,8 +206,10 @@ namespace RefinementTypes2.Expressions
                 }
                 return false;
             })]
-        , // Inferences
-        []
+        , // Can Infer
+        (v1, v2, context) => false
+        , // Can Infer Inverse
+        (v1, v2, context) => v1.IsSameAs(v2, context)
         , // Predicate
         (v1, v2, context) => Convert.ToDouble(v1.Value) < Convert.ToDouble(v2.Value)
         , // Inverse Predicate
@@ -282,8 +261,10 @@ namespace RefinementTypes2.Expressions
                 }
                 return false;
             })]
-        , // Inferences
-        []
+        , // Can Infer
+        (v1, v2, context) => false
+        , // Can Infer Inverse
+        (v1, v2, context) => v1.IsSameAs(v2, context)
         , // Predicate
         (v1, v2, context) => Convert.ToDouble(v1.Value) > Convert.ToDouble(v2.Value)
         , // Inverse Predicate
